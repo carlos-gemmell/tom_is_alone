@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify
-app = Flask(__name__)
+from flask import Flask, request, jsonify, render_template, send_from_directory
+app = Flask(__name__, static_folder="./tom_is_lost_unity/builds/tom_is_lost_build")
 
 @app.route('/getmsg/', methods=['GET'])
 def respond():
@@ -43,8 +43,13 @@ def post_something():
 # A welcome message to test our server
 @app.route('/')
 def index():
-    return "<h1>Welcome to our server !!</h1>"
+    return app.send_static_file('index.html')
+
+@app.route("/<path:path>")
+def static_resp(path):
+    return send_from_directory('./tom_is_lost_unity/builds/tom_is_lost_build', path)
 
 if __name__ == '__main__':
     # Threaded option to enable multiple instances for multiple user access support
     app.run(threaded=True, port=5000)
+    
