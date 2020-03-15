@@ -4,6 +4,7 @@ import socketio
 sio = socketio.Client()
 
 sio.connect('http://localhost:5000')
+# sio.connect('https://tomisalone.herokuapp.com')
 
 sio.emit('beep', {'foo': 'bar'})
 
