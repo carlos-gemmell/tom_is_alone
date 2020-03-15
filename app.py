@@ -1,44 +1,36 @@
+import eventlet
+eventlet.monkey_patch()
 from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask_socketio import SocketIO, emit, send
+import tweepy
 app = Flask(__name__, static_folder="./tom_is_lost_unity/builds/tom_is_lost_build")
 
-@app.route('/getmsg/', methods=['GET'])
-def respond():
-    # Retrieve the name from url parameter
-    name = request.args.get("name", None)
+auth = tweepy.OAuthHandler("MIjdhsGgxXDf6x42njMNoUGcp", "diqNByAalW57PxaHzHVeTZXVhWlLwOwtVtaKxz8ooaTFWqfG61")
+auth.set_access_token("1237176395740196865-VJGXrPrbyWEHTSeHNQivI0VOD1zabo", "gZrIXk5Ijy7W3kjgpiVUeHaGELIk1QTcOMDGJPfVeXcXs")
 
-    # For debugging
-    print(f"got name {name}")
+api = tweepy.API(auth)
 
-    response = {}
+# app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, async_mode='eventlet')
 
-    # Check if user sent a name at all
-    if not name:
-        response["ERROR"] = "no name found, please send a name."
-    # Check if the user entered a number not a name
-    elif str(name).isdigit():
-        response["ERROR"] = "name can't be numeric."
-    # Now the user entered a valid name
-    else:
-        response["MESSAGE"] = f"Welcome {name} to our awesome platform!!"
 
-    # Return the response in json format
-    return jsonify(response)
+# @socketio.on('connect')
+# def handle_message(message):
+#     emit('my response', {'data': 'Connected'})
 
-@app.route('/post/', methods=['POST'])
-def post_something():
-    param = request.form.get('name')
-    print(param)
-    # You can add the test cases you made in the previous function, but in our case here you are just testing the POST functionality
-    if param:
-        return jsonify({
-            "Message": f"Welcome {name} to our awesome platform!!",
-            # Add this option to distinct the POST request
-            "METHOD" : "POST"
-        })
-    else:
-        return jsonify({
-            "ERROR": "no name found, please send a name."
-        })
+@socketio.on('beep')
+def handle_json(json):
+    print("received boop!")
+    print(json)
+    emit('boop', {"a":"b"})
+
+class MyStreamListener(tweepy.StreamListener):
+
+    def on_status(self, status):
+        print(status.text)
+        print(socketio)
+        socketio.emit('boop', {"got a tweet":status.text})
+        print("tweet supposedly sent")
 
 # A welcome message to test our server
 @app.route('/')
@@ -51,5 +43,13 @@ def static_resp(path):
 
 if __name__ == '__main__':
     # Threaded option to enable multiple instances for multiple user access support
-    app.run(threaded=True, port=5000)
+    # app.run(threaded=True, port=5000)
+    myStreamListener = MyStreamListener()
+    myStream = tweepy.Stream(auth = api.auth, listener=myStreamListener)
+
+    myStream.filter(track=['@tom_is_alone', '@tomisalone2'], is_async=True)
+    print("after")
+    socketio.run(app)
+    print("even after")
+    
     
