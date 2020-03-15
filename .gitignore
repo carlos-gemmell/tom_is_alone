@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# unity
+tom_is_lost_unity/
+
 # C extensions
 *.so
 
